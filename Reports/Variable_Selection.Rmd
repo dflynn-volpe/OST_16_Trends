@@ -1,0 +1,77 @@
+---
+title: "Variable Exploratory Analysis"
+output: html_document
+---
+
+
+Exploratory data analysis of the OST-R Project 16 database
+
+- Connect to the database snapshot in the Volpe shared drive
+- Re-create some of Mikio's initial figures
+- Make a slimmed-down version / specific tables for Tableau
+- Save those in the shared drive
+
+```{r setup, cache=TRUE}
+library(tidyverse)
+library(readr)
+
+data_location = '//vwfs05/3BC-SHARE$/OST-R Priority Projects/16. Contributing Factors to Trends in Roadway Fatalities/Data/CrashData'
+
+data_file = 'AcVeUPD.csv'
+
+d <- read_csv(file.path(data_location, data_file))
+
+```
+
+There are `r format(nrow(d), big.mark = ',')` rows and `r ncol(d)` columns of data.
+
+TODO: 
+
+- Get final list of column names and meta-data from Mikio
+- Create a reduced file for Tableau, with only key variables included
+
+
+Notes from Mikio on the sample database:
+
+>
+> - This is a sample of the database we are creating (10,000 records for FARS, GES, CRSS)
+> - The final database is >680,000 rows
+> - The data contains 2 vehicles and relevant driver (these are named "variable"_1 or "variable"_2)
+> "_nc" suffix denotes a variable that we tried to categorize based on its raw variable
+> - This is a 1:1 of the raw data, case count wise. Not all variables are raw variables from the data, some are created by Volpe
+> - This is created for our purposes and may not be the cleanest in its form, there are differences between N/A, null, "Missing", Unknown, > Not Reported, Blank, etc…
+
+
+> The things you need to start with:
+> - SOURCE
+> - WEIGHT
+> - YEAR
+>
+> 
+> These 3 variables are the basis of the analysis, to identify trends over times in the variables. From here, its really plug and play. 
+> 
+> Happy to sit down and talk about anything (variable names, best next steps, etc…)
+> My Task 1 Analysis are looking at these variables to refine our analysis, maybe we start in the same spot on how we show the data?
+> ALCHL_IM, ALCOHOL, dr_dis'x'_nc, drimp'x'_nc, drvis'x'_nc, h_age, h_sex, highway_rc, TYP_INT,vtype
+>
+
+## Initial data exploration
+
+```{r explore1}
+# Plot FARS and GES/CRSS cases in total by year
+table(d$SOURCE)
+
+# Counts by year by source. Create a new two-level source variable to combine GES (2011 to 2015) with CRSS (since 2016)
+
+counts_yr <- d %>%
+  mutate(SOURCE2 = ifelse(SOURCE == 'FARS', 'FARS', 'GES/CRSS')) %>%
+  group_by(SOURCE2, YEAR) %>%
+  summarize(crash_count = n())
+
+
+ggplot(counts_yr, aes(x = YEAR, y = crash_count)) +
+  geom_point() + geom_line() +
+  facet_wrap(~SOURCE2) +
+  ggtitle('Crash counts in total across years, by source')
+
+```
