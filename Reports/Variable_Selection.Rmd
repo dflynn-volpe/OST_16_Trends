@@ -11,15 +11,22 @@ Exploratory data analysis of the OST-R Project 16 database
 - Make a slimmed-down version / specific tables for Tableau
 - Save those in the shared drive
 
-```{r setup, cache=TRUE}
+```{r setup}
+source('../get_packages.R') # get all necessary packages
+
 library(tidyverse)
 library(readr)
+library(plotly)
 
 data_location = '//vwfs05/3BC-SHARE$/OST-R Priority Projects/16. Contributing Factors to Trends in Roadway Fatalities/Data/CrashData'
 
-data_file = 'AcVeUPD.csv'
+# data_file = 'AcVeUPD.csv'
+# 
+# d <- read_csv(file.path(data_location, data_file))
 
-d <- read_csv(file.path(data_location, data_file))
+# Load from RData file, created previously from the csv. Much faster to load
+
+load(file.path(data_location, 'AcVeUPD.RData'))
 
 ```
 
@@ -62,16 +69,91 @@ Notes from Mikio on the sample database:
 table(d$SOURCE)
 
 # Counts by year by source. Create a new two-level source variable to combine GES (2011 to 2015) with CRSS (since 2016)
+# sum over WEIGHT to get the crash counts. Row sums = case counts
 
 counts_yr <- d %>%
   mutate(SOURCE2 = ifelse(SOURCE == 'FARS', 'FARS', 'GES/CRSS')) %>%
   group_by(SOURCE2, YEAR) %>%
-  summarize(crash_count = n())
+  summarize(case_count = n(),
+            crash_count = sum(WEIGHT))
 
 
 ggplot(counts_yr, aes(x = YEAR, y = crash_count)) +
   geom_point() + geom_line() +
-  facet_wrap(~SOURCE2) +
+  facet_wrap(~SOURCE2, scales = 'free_y') +
   ggtitle('Crash counts in total across years, by source')
 
+```
+
+## Grouping plots 
+
+Aim to recreate slides 5 - 8
+
+Validate against files in Teams folder
+Refer to the `Analysis` sheet
+
+- Pre-crash scenario plots: `grouping` 
+- For FARS vs 
+- Body Type
+
+
+
+```{r grouping_tables}
+
+table(d$grouping, d$SOURCE) # number of rows. Need to sum WEIGHTs by these categories to get crash counts for GES/CRSS
+
+table(d$grouping, d$vtype_sv) # sv = subject-vehicle 
+
+table(d$vtype_sv, d$vtype_pv) # sv = subject-vehicle, pv = principal-other vehicle (the vehicle being struck) 
+
+# Getting towards the Danish plots
+# table(d$grouping, d$vtype_sv, d$vtype_pv) # sv = subject-vehicle, pv = principal-other vehicle (the vehicle being struck) 
+
+table(d$grouping, d$SOURCE)
+```
+
+### Slide 7: Proportion of crashes groups, over years
+
+For FARS
+
+```{r grouping_plots}
+
+fars_total_yr <- d %>%
+  filter(SOURCE == 'FARS') %>%
+  ungroup() %>%
+  group_by(YEAR) %>%
+  summarize(sum_crashes_tot = sum(WEIGHT))
+
+fars_grouping_yr <- d %>%
+  filter(SOURCE == 'FARS') %>%
+  ungroup() %>%
+  group_by(YEAR, grouping) %>%
+  summarize(sum_crashes_grp = sum(WEIGHT))
+
+fars_grouping <- full_join(fars_total_yr, fars_grouping_yr)
+
+fars_grouping_prop <- fars_grouping %>%
+  ungroup() %>%
+  group_by(YEAR, grouping) %>%
+  summarize(prop_crashes_group = round(100 * sum_crashes_grp / sum_crashes_tot, 2))
+
+slide7 <- ggplot(fars_grouping_prop, aes(x = YEAR, y = prop_crashes_group,
+                               fill = grouping)) + 
+  geom_bar(position = 'stack', stat = 'identity') +
+  ylab('Proportion of crashes by pre-crash scenario') +
+  xlab('Calendar Year')
+
+slide7
+
+# and adding an interactive version
+
+ggplotly(slide7)
+
+
+```
+
+
+```{r save, include=FALSE}
+# save(list = 'd',
+#     file = file.path(data_location, 'AcVeUPD.RData'))
 ```
