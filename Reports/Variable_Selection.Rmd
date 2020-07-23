@@ -2,7 +2,6 @@
 title: "Variable Exploratory Analysis"
 output: html_document
 ---
-jhlkjl;l
 
 Exploratory data analysis of the OST-R Project 16 database
 
@@ -34,7 +33,10 @@ There are `r format(nrow(d), big.mark = ',')` rows and `r ncol(d)` columns of da
 
 TODO: 
 
-- Get final list of column names and meta-data from Mikio
+- Get final list of column names and meta-data from Mikio:
+  + Done, see Data Dictionary FINAL - 2020-07-17.xlsx.
+  + Use Priority == P and _sv subject vehicle variables for initial Tableau work
+  
 - Create a reduced file for Tableau, with only key variables included
 
 

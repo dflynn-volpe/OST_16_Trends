@@ -1,0 +1,83 @@
+---
+title: "Task 1 Analysis"
+output: html_document
+---
+
+```{r setup}
+source('../get_packages.R') # get all necessary packages
+
+library(tidyverse)
+library(readr)
+library(plotly)
+
+data_location = '//vwfs05/3BC-SHARE$/OST-R Priority Projects/16. Contributing Factors to Trends in Roadway Fatalities/Data/CrashData'
+
+# data_file = 'AcVeUPD.csv'
+# 
+# d <- read_csv(file.path(data_location, data_file))
+
+# Load from RData file, created previously from the csv. Much faster to load
+
+load(file.path(data_location, 'AcVeUPD.RData'))
+
+```
+
+# Control loss
+
+`grouping` is the main variable to look at. Grouping has 12 levels of pre-crash scenario.
+
+- Do for FARS and GES/CRSS separately
+
+- Outcome variable: count of crashes
+
+- Predictor variables:  
+  + `h_age_svCAT`: Driver age of subject vehicle, binned into categories ** Does include 1700 0 to 5 year old drivers... 
+  + `speedrel_sv`: Speeding related **
+  + `vsurcond_sv`: Surface condition for subject vehicle ** Dry, Slick (not Dry or Other), and Other + Reported as Unknown
+  
+- Mediator variables (possibly include): 
+  + `h_mdlyr_sv`: Vehicle Model Year - no
+  + `YEAR`: Year 
+  + `p_inj_count_{A/B/C/DIED/K/O/U}`: Count or weight of number of persons injured on each level of KABCO scale
+  + `vspd_lim_sv`: Posted speed limit for subject vehicle - no
+  + `vtype_sv`: Vehicle body type for subject vehicle - no
+  
+- Grouping variables (probably don't include at first):
+  + `scenario`: pre-crash scenario defiened by Volpe. 
+  + `RUR_URB`: Rural or urban
+  
+  
+  
+```{r prep_fars}
+
+counts_yr <- d %>%
+  filter(grouping == 'b. Control Loss') %>%
+  mutate(SOURCE2 = ifelse(SOURCE == 'FARS', 'FARS', 'GES/CRSS')) %>%
+  group_by(SOURCE2, YEAR, 
+           h_mdlyr_pv,
+           speedrel_pv,
+           h_age_pv,
+           scenario) %>%
+  summarize(case_count = n(),
+            crash_count = sum(WEIGHT))
+
+
+counts_yr <- d %>%
+  filter(grouping == 'b. Control Loss') %>%
+  mutate(SOURCE2 = ifelse(SOURCE == 'FARS', 'FARS', 'GES/CRSS')) %>%
+  group_by(SOURCE2, YEAR) %>%
+  summarize(case_count = n(),
+            crash_count = sum(WEIGHT))
+
+ggplot(counts_yr, aes(x = YEAR, y = crash_count)) +
+  geom_point() + geom_line() +
+  facet_wrap(~SOURCE2, scales = 'free_y') +
+  ggtitle('Crash counts in total across years, by source')
+
+```
+
+```{r analysis1}
+
+m1 <- lm()
+
+```
