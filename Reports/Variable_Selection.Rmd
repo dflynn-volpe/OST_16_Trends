@@ -154,8 +154,33 @@ ggplotly(slide7)
 
 ```
 
+# Subset for Tableau
 
-```{r save, include=FALSE}
+- Use `Data_Dictionary_AcVeUPD_Select` sheet on `Data Dictionary - 2020-07-17.xlsx` to downselect the variables for Tableau
+- Can manually edit the `Tableau1` column on that sheet to add or remove variables.
+
+```{r save, include=T}
+library(readxl)
+
+dict_file = 'Data Dictionary FINAL - 2020-07-17.xlsx'
+
+var_select <- read_xlsx(file.path(data_location, dict_file),
+                        sheet = 'Data_Dictionary_AcVeUPD_Select')
+
+keep_vars = var_select %>%
+  filter(Tableau1 == 'x') %>%
+  select(Variable)
+
+keep_vars = unclass(keep_vars$Variable)
+
+d_Tableau = d[, keep_vars]
+
 # save(list = 'd',
 #     file = file.path(data_location, 'AcVeUPD.RData'))
+
+data_location = '~/'
+
+write_csv(d_Tableau,
+    path = file.path(data_location, 'AcVeUPD_Tableau.csv'))
+
 ```
