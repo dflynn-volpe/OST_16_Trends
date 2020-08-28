@@ -20,7 +20,7 @@ library(plotly)
 data_location = '//vwfs05/3BC-SHARE$/OST-R Priority Projects/16. Contributing Factors to Trends in Roadway Fatalities/Data/CrashData'
 
 # data_file = 'AcVeUPD.csv'
-# 
+
 # d <- read_csv(file.path(data_location, data_file))
 
 # Load from RData file, created previously from the csv. Much faster to load
